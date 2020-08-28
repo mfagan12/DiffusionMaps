@@ -38,5 +38,10 @@ def generate_toroidal_helix(n_points, noisiness, R, r, n):
     epsilon = np.random.randn(3, n_points) * noisiness
     return X + epsilon
 
+def generate_swiss_roll():
+    X = 0
+    epsilon = np.random.randn(3, n_points) * noisiness
+    return X + epsilon
+
 if __name__ == "__main__":
     pass

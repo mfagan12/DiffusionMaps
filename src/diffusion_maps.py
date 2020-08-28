@@ -3,6 +3,7 @@ import numpy as np
 from pdb import set_trace
 from tqdm import tqdm
 from scipy.spatial.distance import pdist, squareform
+from numpy.linalg import matrix_power
 
 def rbf_kernel(epsilon=2):
     '''
@@ -18,7 +19,7 @@ def polynomial_kernel(d=2):
     
     Arguments:
     '''
-    return lambda x,y: (x.T @ y + 1)**2
+    return lambda x,y: (x.T @ y + 1)**d
     raise NotImplementedError
     
 def cknn_kernel(bandwidth=1/2):
@@ -44,7 +45,7 @@ def kernel_matrix(kernel, X):
     K = kernel(X)
     return K
 
-def normalize_kernel(K, alpha=1/2):
+def normalize_kernel(K, alpha=1):
     '''
     Computes the graph Laplacian normalization of a similarity matrix.
     '''
@@ -52,19 +53,16 @@ def normalize_kernel(K, alpha=1/2):
     L_alpha = D @ K @ D
     D_alpha = np.diag(L_alpha.sum(axis=1)**(-1))
     M = D_alpha @ L_alpha
-    return M
+    return (M + M.T) / 2
 
-# def normalize_kernel2(K, alpha=1/2):
-#     '''
-#     Computes the graph Laplacian normalization of a similarity matrix.
-#     '''
-#     D = np.diag(K.sum(axis=1)**(-alpha))
-#     L_alpha = D @ K @ D
-#     D_alpha = np.diag(L_alpha.sum(axis=1)**(-1))
-#     M = D_alpha @ L_alpha
-#     return M
+def normalize_kernel2(K):
+    '''
+    Computes the graph Laplacian normalization of a similarity matrix.
+    '''
+    D = np.diag(K.sum(axis=1)**(-1))
+    return D @ K
 
-def diffusion_maps(X, kernel, alpha=1/2):
+def diffusion_maps(X, kernel, alpha=1/2, t=1):
     '''
     Compute the diffusion map embedding for given data and kernel.
     
@@ -74,14 +72,19 @@ def diffusion_maps(X, kernel, alpha=1/2):
         dims -- 
     '''
     K1 = kernel_matrix(kernel, X)
-    K2 = normalize_kernel(K1, alpha)
-    D = np.linalg.eigh(K2)
+#     set_trace()
+#     K2 = normalize_kernel(K1, alpha)
+    K2 = normalize_kernel2(K1)
+#     set_trace()
+    D = np.linalg.eigh(matrix_power(K2, t))
+#     set_trace()
     return D
 
-def diffusion_embedding(D, k=2, t=1):
+def diffusion_embedding(D, k=2):
     eigvals, eigvecs = D
     eigvals, eigvecs = eigvals[::-1], eigvecs[:,::-1]
-    Phi = eigvecs * eigvals**t
+#     set_trace()
+    Phi = eigvecs * eigvals
     return Phi[:,:k]
     
 # class DiffusionMaps(BaseEstimator, TransformerMixin):
