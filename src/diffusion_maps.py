@@ -32,16 +32,7 @@ def kernel_matrix(kernel, X):
     '''
     Computes the pairwise similarity matrix for a matrix of vectors
     according to a given kernel function.
-    '''
-    # This implementation can almost certainly be optimized,
-    # at least by not computing the elements above and below
-    # the diagonal.
-#     N = X.shape[1]
-#     K = np.zeros((N,N))
-#     for i in tqdm(range(N)):
-#         for j in range(N):
-#             K[i,j] = kernel(X[:,i], X[:,j])
-            
+    '''        
     K = kernel(X)
     return K
 
