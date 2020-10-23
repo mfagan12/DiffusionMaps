@@ -1,4 +1,6 @@
 import numpy as np
+from typing import Tuple
+array = np.ndarray
 
 def generate_toy_ellipse(n_points=1000, noisiness=1/80, r1=1, r2=1):
     '''
@@ -31,7 +33,8 @@ def generate_broken_ellipse(n_points=1000, noisiness=1/80, r1=1, r2=1):
     epsilon = np.random.randn(2, n_points) * noisiness
     return X + epsilon
 
-def generate_toroidal_helix(n_points, noisiness, R, r, n):
+def generate_toroidal_helix(n_points: int, noisiness: float, 
+                            R: float, r: float, n: int) -> Tuple[array, array]:
     X = np.linspace(0, 2*np.pi , n_points)
     X = np.array(((R + r * np.cos(n*X)) * np.cos(X), 
                   (R + r * np.cos(n*X)) * np.sin(X), 
@@ -41,7 +44,7 @@ def generate_toroidal_helix(n_points, noisiness, R, r, n):
     color = np.sin(3*np.linspace(0, 2*np.pi , n_points))
     return data, color
 
-def generate_swiss_roll():
+def generate_swiss_roll(n_points: int, noisiness: float) -> array:
     X = 0
     epsilon = np.random.randn(3, n_points) * noisiness
     return X + epsilon

@@ -5,22 +5,32 @@ from tqdm import tqdm
 from scipy.spatial.distance import pdist, squareform
 from numpy.linalg import matrix_power
 
-def rbf_kernel(epsilon=2):
+array = np.ndarray
+
+def rbf_kernel(epsilon: float = 1/2) -> callable:
     '''
     Implements the radial basis function kernel, aka the Gaussian kernel.
-    
-    Arguments:
-    '''
-    return lambda X: np.exp(-squareform(pdist(X.T))**2 / epsilon)
 
-def polynomial_kernel(d=2):
+    Args:
+        epsilon (float, optional): Bandwidth parameter. Defaults to 2.
+
+    Returns:
+        callable: quickly computes rbf similarity matrix for given data matrix X
     '''
-    Implements the polynomial kernel.
-    
-    Arguments:
+    return lambda X: np.exp(-squareform(pdist(X.T), 'sqeuclidean') / epsilon)
+
+def polynomial_kernel(d: int = 2) -> callable:
+    '''
+    Implements a polynomial kernel.
+
+    Args:
+        d (int, optional): Degree of polyomial. Defaults to 2.
+
+    Returns:
+        callable: quickly computes polynomial similarity matrix for given data
+            matrix X
     '''
     return lambda x,y: (x.T @ y + 1)**d
-    raise NotImplementedError
     
 def cknn_kernel(bandwidth=1/2):
     '''
@@ -28,7 +38,7 @@ def cknn_kernel(bandwidth=1/2):
     '''
     raise NotImplementedError
 
-def kernel_matrix(kernel, X):
+def kernel_matrix(kernel: callable, X: array) -> array:
     '''
     Computes the pairwise similarity matrix for a matrix of vectors
     according to a given kernel function.
@@ -36,46 +46,54 @@ def kernel_matrix(kernel, X):
     K = kernel(X)
     return K
 
-def normalize_kernel(K, alpha=1):
+def normalize_kernel(K: array, alpha: float = 1) -> array:
     '''
     Computes the graph Laplacian normalization of a similarity matrix.
+    
+    Arguments:
+    K -- array -- pairwise similarity matrix generated from data via some kernel
+    alpha -- float -- 
+    
+    Returns:
+    array -- normalized version of similarity matrix
     '''
+    # Diagonal matrix of row sums of K to the -alpha power
     D = np.diag(K.sum(axis=1)**(-alpha))
-    L_alpha = D @ K @ D
-    D_alpha = np.diag(L_alpha.sum(axis=1)**(-1))
-    M = D_alpha @ L_alpha
-    return (M + M.T) / 2
+    K_hat = D @ K @ D
+    
+    D_hat = np.diag(K_hat.sum(axis=1)**(-1))
+    K_bar = D_hat @ K_hat
+    
+    return (K_bar + K_bar.T) / 2
 
-def normalize_kernel2(K):
-    '''
-    Computes the graph Laplacian normalization of a similarity matrix.
-    '''
-    D = np.diag(K.sum(axis=1)**(-1))
-    return D @ K
+# def normalize_kernel2(K: array) -> array:
+#     '''
+#     Computes the graph Laplacian normalization of a similarity matrix.
+#     '''
+#     D = np.diag(K.sum(axis=1)**(-1))
+#     return D @ K
 
-def diffusion_maps(X, kernel, alpha=1/2, t=1):
+def diffusion_maps(X: array, kernel: callable, alpha: float = 1) -> array:
     '''
     Compute the diffusion map embedding for given data and kernel.
     
     Arguments:
-        X -- 
-        kernel -- 
-        dims -- 
+        X -- array -- data matrix, data assumed to be along columns, one row 
+            per feature
+        kernel -- function -- kernel function to compute similarity matrix from 
+            data
+        alpha -- float -- 
+        t -- int -- 
     '''
     K1 = kernel_matrix(kernel, X)
-#     set_trace()
-#     K2 = normalize_kernel(K1, alpha)
-    K2 = normalize_kernel2(K1)
-#     set_trace()
-    D = np.linalg.eigh(matrix_power(K2, t))
-#     set_trace()
+    K2 = normalize_kernel(K1, alpha)
+    D = np.linalg.eigh(K2)
     return D
 
-def diffusion_embedding(D, k=2):
+def diffusion_embedding(D: array, k: int = 2, t: int = 1) -> array:
     eigvals, eigvecs = D
     eigvals, eigvecs = eigvals[::-1], eigvecs[:,::-1]
-#     set_trace()
-    Phi = eigvecs * eigvals
+    Phi = eigvecs * eigvals**t
     return Phi[:,:k]
     
 # class DiffusionMaps(BaseEstimator, TransformerMixin):
